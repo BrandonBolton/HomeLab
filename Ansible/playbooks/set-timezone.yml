@@ -1,0 +1,35 @@
+- hosts: "*"
+  become: yes
+  vars:
+    ansible_become_password: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
+  tasks:
+    - name: Set timezone to America/Chicago
+      timezone:
+        name: America/Chicago
+
+    - name: Install chrony
+      dnf:
+        name: chrony
+        state: present
+
+    - name: Ensure chrony is running and enabled
+      service:
+        name: chronyd
+        state: started
+        enabled: yes
+      
+    - name: Configure NTP servers, defaulting to Fedora Linux pool and restarts chrony
+      blockinfile:
+        path: /etc/chrony.conf
+        block: |
+          server 0.fedora.pool.ntp.org iburst
+          server 1.fedora.pool.ntp.org iburst
+          server 2.fedora.pool.ntp.org iburst
+          server 3.fedora.pool.ntp.org iburst
+      notify: Restart chrony
+
+  handlers:
+    - name: Restart chrony
+      service:
+        name: chronyd
+        state: restarted

@@ -1,0 +1,16 @@
+# Ignore Visual Studio Code settings
+.vscode/
+.vscode/*
+
+# Ignore Ansible temporary files
+*.retry
+*.log
+
+# Ignore Kubernetes configuration files
+.kube/
+.kube/*
+
+# General ignores
+*.swp
+*.swo
+.DS_Store
