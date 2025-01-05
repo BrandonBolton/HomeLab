@@ -1,0 +1,85 @@
+- name: Installs the software I use on my Red Hat based distros
+  hosts: "AlmaLinux"
+  become: true
+  vars:
+    ansible_become_password: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
+  tasks:
+    - name: Installs the base packages
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - gnupg
+        - dnf-plugins-core
+
+    - name: VS Code - Checks to see if the latest version of VS Code is installed
+      ansible.builtin.command:
+        cmd: code --version
+      register: code_version
+      ignore_errors: true
+      changed_when: false
+
+    - name: VS Code - Installs the latest version of VS Code if it is not installed
+      ansible.builtin.debug:
+        msg: "VS Code is already installed"
+      when: code_version.rc == 0
+
+    - name: VS Code - Downloads the latest version of VS Code in .rpm format
+      ansible.builtin.get_url:
+        url: https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64
+        dest: /tmp/code.rpm
+        mode: '0755'
+      when: code_version.rc != 0
+
+    - name: VS Code - Import Microsoft GPG key, which is required for VS Code installing
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://packages.microsoft.com/keys/microsoft.asc
+      when: code_version.rc != 0
+
+    - name: VS Code - Installs VS Code from the .rpm file
+      ansible.builtin.dnf:
+        name: /tmp/code.rpm
+        state: present
+      when: code_version.rc != 0
+
+    - name: Docker Desktop - Checks to see if the latest version of Docker Desktop is installed
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      ignore_errors: true
+      changed_when: false
+
+    - name: Docker Desktop - Installs the latest version of Docker Desktop if it is not installed
+      ansible.builtin.debug:
+        msg: "Docker Desktop is already installed"
+      when: docker_version.rc == 0
+
+    - name: Docker Desktop - Import the Docker repo
+      ansible.builtin.command:
+        cmd: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+      when: docker_version.rc != 0
+      changed_when: false
+
+    - name: Docker Desktop - Installs docker-ce and docker-ce-cli
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - docker-ce
+        - docker-ce-cli
+      when: docker_version.rc != 0
+
+    - name: Docker Desktop - Downloads the latest version of Docker Desktop in .rpm format
+      ansible.builtin.get_url:
+        url: https://desktop.docker.com/linux/main/amd64/docker-desktop-x86_64.rpm
+        dest: /tmp/docker.rpm
+        mode: '0755'
+      when: docker_version.rc != 0
+
+    - name: Docker Desktop - Installs Docker Desktop from the .rpm file
+      ansible.builtin.dnf:
+        name: /tmp/docker.rpm
+        state: present
+      when: docker_version.rc != 0

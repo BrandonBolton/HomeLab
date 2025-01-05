@@ -1,0 +1,25 @@
+- name: Installs the default SSH key, used for Ansible and Kubernetes
+  hosts: "*"
+  become: true
+  become_user: brandonbolton
+  vars:
+    ansible_become_password: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
+    ssh_public_key: "{{ lookup('env', 'ANSIBLE_PUBLIC_SSH_KEY') }}"
+    ansible_ssh_pass: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
+    ansible_connection: ssh
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Confirms the .ssh directory exists
+      ansible.builtin.file:
+        path: /home/brandonbolton/.ssh
+        state: directory
+        mode: '0700'
+        owner: brandonbolton
+        group: brandonbolton
+
+    - name: Sets authorized key for the user brandonbolton
+      ansible.posix.authorized_key:
+        user: brandonbolton
+        state: present
+        key: "{{ ssh_public_key }}"
