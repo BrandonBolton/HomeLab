@@ -12,6 +12,8 @@
         - git
         - gnupg
         - dnf-plugins-core
+        - python3.12
+        - epel-release
 
     - name: VS Code - Checks to see if the latest version of VS Code is installed
       ansible.builtin.command:
@@ -62,13 +64,15 @@
       when: docker_version.rc != 0
       changed_when: false
 
-    - name: Docker Desktop - Installs docker-ce and docker-ce-cli
+    - name: Docker Desktop - Installs docker-ce, docker-ce-cli, and Docker Desktop dependencies
       ansible.builtin.dnf:
         name: "{{ item }}"
         state: present
       loop:
         - docker-ce
         - docker-ce-cli
+        - pass
+        - "@Virtualization Host"
       when: docker_version.rc != 0
 
     - name: Docker Desktop - Downloads the latest version of Docker Desktop in .rpm format

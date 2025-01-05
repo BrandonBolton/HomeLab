@@ -1,2 +1,2 @@
 [AlmaLinux]
-boltondesktop.local ansible_python_interpreter=/usr/bin/python3.12
+boltondesktop.local ansible_host=192.168.6.68
