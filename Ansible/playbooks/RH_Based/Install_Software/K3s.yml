@@ -1,0 +1,53 @@
+- name: K3s - Check if K3s is already installed
+  ansible.builtin.command: k3s --version
+  register: k3s_version
+  ignore_errors: true
+  changed_when: false
+
+- name: K3s - Download K3s installation script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s_install.sh
+    mode: '0755'
+  when: k3s_version.rc != 0
+
+- name: K3s - Installs the newest version of K3s
+  ansible.builtin.shell: /tmp/k3s_install.sh
+  when: k3s_version.rc != 0
+
+- name: K3s - Starts the K3s service
+  ansible.builtin.systemd:
+    name: k3s
+    state: started
+    enabled: true
+  when: k3s_version.rc != 0
+
+- name: K3s - Allow API server traffic
+  ansible.posix.firewalld:
+    port: 6443/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+  when: k3s_version.rc != 0
+
+- name: K3s - Allow pod network traffic
+  ansible.posix.firewalld:
+    source: 10.42.0.0/16
+    zone: trusted
+    permanent: true
+    state: enabled
+    immediate: true
+  when: k3s_version.rc != 0
+
+- name: K3s - Allow service network traffic
+  ansible.posix.firewalld:
+    source: 10.43.0.0/16
+    zone: trusted
+    permanent: true
+    state: enabled
+    immediate: true
+  when: k3s_version.rc != 0
+
+- name: K3s - Reload firewalld
+  ansible.builtin.command: firewall-cmd --reload
+  when: k3s_version.rc != 0

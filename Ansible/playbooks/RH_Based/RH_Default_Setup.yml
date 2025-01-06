@@ -68,3 +68,6 @@
 
     - name: Sets the timezone to America/Chicago from Timezone playbook
       ansible.builtin.include_tasks: Install_Software/Timezone.yml
+
+    - name: Installs K3s from K3s playbook
+      ansible.builtin.include_tasks: Install_Software/K3s.yml

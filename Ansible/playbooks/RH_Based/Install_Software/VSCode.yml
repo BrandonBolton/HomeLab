@@ -23,6 +23,18 @@
     state: present
   when: code_version.rc != 0
 
+- name: VS Code - Install VS Code from the .rpm file
+  ansible.builtin.dnf:
+    name: /tmp/code.rpm
+    state: present
+  when: code_version.rc != 0
+
+- name: VS Code - Check if VS Code extension is installed
+  ansible.builtin.command: code --list-extensions
+  register: installed_extensions
+  changed_when: false
+  when: code_version.rc == 0
+
 - name: VS Code - Install VS Code extensions
   ansible.builtin.command: code --install-extension {{ item }}
   loop:
@@ -30,14 +42,4 @@
     - ms-azuretools.vscode-docker
     - redhat.vscode-yaml
     - ms-kubernetes-tools.vscode-kubernetes-tools
-    - github.copilot
-  when: code_version.rc == 0
-
-- name: VS Code - Set the default theme to Solarized Dark
-  ansible.builtin.copy:
-    dest: "{{ lookup('env', 'HOME') }}/.config/Code/User/settings.json"
-    content: |
-      {
-        "workbench.colorTheme": "Solarized Dark"
-      }
-  when: code_version.rc == 0
+  when: code_version.rc == 0 and installed_extensions.stdout.find(item) == -1
