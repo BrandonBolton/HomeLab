@@ -21,7 +21,6 @@
       server 1.fedora.pool.ntp.org iburst
       server 2.fedora.pool.ntp.org iburst
       server 3.fedora.pool.ntp.org iburst
-  notify: Restart chrony
 
 - name: Timeezone - Restart chrony
   ansible.builtin.service:
