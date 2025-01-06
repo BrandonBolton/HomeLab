@@ -4,7 +4,9 @@
   vars:
     ansible_become_password: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
   tasks:
-    - name: Update all packages
+    - name: Update all packages to the latest version
       ansible.builtin.dnf:
         name: "*"
-        state: present
+        state: latest
+        update_cache: true
+        update_only: true
