@@ -1,2 +1,2 @@
 [AlmaLinux]
-boltondesktop.local ansible_host=192.168.6.68
+desktop.boltonhomelab.com

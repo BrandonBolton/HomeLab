@@ -1,0 +1,70 @@
+- name: Installs the software I use on my Red Hat based distros
+  hosts: "AlmaLinux"
+  become: true
+  vars:
+    ansible_become_password: "{{ lookup('env', 'ANSIBLE_BECOME_PASSWORD') }}"
+  tasks:
+    - name: Installs the base packages
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - gnupg
+        - dnf-plugins-core
+        - python3.12
+        - epel-release
+
+    - name: Installs the development tools
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - gcc
+        - make
+        - cmake
+        - autoconf
+        - automake
+        - libtool
+        - pkgconf
+        - valgrind
+        - gdb
+        - clang
+        - llvm
+        - llvm-devel
+        - llvm-static
+        - llvm-libs
+
+    - name: Installs the networking tools
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - net-tools
+        - nmap
+        - tcpdump
+
+    - name: Installs the system tools
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - htop
+        - iotop
+        - iftop
+        - atop
+        - sysstat
+        - strace
+        - lsof
+        - ltrace
+        - dstat
+        - ncdu
+
+    - name: Installs VS Code from VS Code playbook
+      ansible.builtin.include_tasks: Install_Software/VSCode.yml
+
+    - name: Installs Docker from Docker playbook
+      ansible.builtin.include_tasks: Install_Software/Docker.yml
+
+    - name: Sets the timezone to America/Chicago from Timezone playbook
+      ansible.builtin.include_tasks: Install_Software/Timezone.yml

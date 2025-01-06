@@ -1,0 +1,29 @@
+- name: Set time zone to America/Chicago
+  community.general.timezone:
+    name: America/Chicago
+
+- name: Timeezone - Install chrony
+  ansible.builtin.dnf:
+    name: chrony
+    state: present
+
+- name: Timeezone - Ensure chrony is running and enabled
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: true
+
+- name: Timeezone - Configure NTP servers, defaulting to Fedora Linux pool and restarts chrony
+  ansible.builtin.blockinfile:
+    path: /etc/chrony.conf
+    block: |
+      server 0.fedora.pool.ntp.org iburst
+      server 1.fedora.pool.ntp.org iburst
+      server 2.fedora.pool.ntp.org iburst
+      server 3.fedora.pool.ntp.org iburst
+  notify: Restart chrony
+
+- name: Timeezone - Restart chrony
+  ansible.builtin.service:
+    name: chronyd
+    state: restarted

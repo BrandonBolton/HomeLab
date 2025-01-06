@@ -1,0 +1,47 @@
+- name: Docker - Checks to see if the latest version of Docker is installed
+  ansible.builtin.command:
+    cmd: docker --version
+  register: docker_version
+  ignore_errors: true
+  changed_when: false
+
+- name: Docker - Checks to see if Docker is installed
+  ansible.builtin.debug:
+    msg: "Docker is already installed"
+  when: docker_version.rc == 0
+
+- name: Docker - Import the Docker repo
+  ansible.builtin.command:
+    cmd: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  when: docker_version.rc != 0
+  changed_when: false
+
+- name: Docker - Installs docker-ce and docker-ce-cli
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - docker-ce
+    - docker-ce-cli
+  when: docker_version.rc != 0
+
+- name: Docker - Verifies the user is in the docker group
+  ansible.builtin.command:
+    cmd: id brandonbolton
+  register: user_id
+  when: docker_version.rc != 0
+  changed_when: false
+
+- name: Docker - Adds the user to the docker group
+  ansible.builtin.user:
+    name: brandonbolton
+    groups: docker
+    append: true
+  when: docker_version.rc != 0 and user_id.stdout.find('docker') == -1
+
+- name: Docker - Starts the Docker service
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+  when: docker_version.rc != 0

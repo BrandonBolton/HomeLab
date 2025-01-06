@@ -1,0 +1,43 @@
+- name: VS Code - Check if VS Code is already installed
+  ansible.builtin.command: code --version
+  register: code_version
+  ignore_errors: true
+  changed_when: false
+
+- name: VS Code - Download the latest version of VS Code in .rpm format
+  ansible.builtin.get_url:
+    url: https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64
+    dest: /tmp/code.rpm
+    mode: '0755'
+  when: code_version.rc != 0
+
+- name: VS Code - Import Microsoft GPG key
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://packages.microsoft.com/keys/microsoft.asc
+  when: code_version.rc != 0
+
+- name: VS Code - Install VS Code from the .rpm file
+  ansible.builtin.dnf:
+    name: /tmp/code.rpm
+    state: present
+  when: code_version.rc != 0
+
+- name: VS Code - Install VS Code extensions
+  ansible.builtin.command: code --install-extension {{ item }}
+  loop:
+    - ms-python.python
+    - ms-azuretools.vscode-docker
+    - redhat.vscode-yaml
+    - ms-kubernetes-tools.vscode-kubernetes-tools
+    - github.copilot
+  when: code_version.rc == 0
+
+- name: VS Code - Set the default theme to Solarized Dark
+  ansible.builtin.copy:
+    dest: "{{ lookup('env', 'HOME') }}/.config/Code/User/settings.json"
+    content: |
+      {
+        "workbench.colorTheme": "Solarized Dark"
+      }
+  when: code_version.rc == 0
