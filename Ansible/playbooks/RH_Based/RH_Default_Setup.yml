@@ -14,6 +14,7 @@
         - dnf-plugins-core
         - python3.12
         - epel-release
+        - neofetch
 
     - name: Installs the development tools
       ansible.builtin.dnf:

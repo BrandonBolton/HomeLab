@@ -43,3 +43,4 @@
     - redhat.vscode-yaml
     - ms-kubernetes-tools.vscode-kubernetes-tools
   when: code_version.rc == 0 and installed_extensions.stdout.find(item) == -1
+  changed_when: false

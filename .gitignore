@@ -1,6 +1,7 @@
 # Ignore Visual Studio Code settings
 .vscode/
 .vscode/*
+.venv/
 
 # Ignore Ansible temporary files
 *.retry
