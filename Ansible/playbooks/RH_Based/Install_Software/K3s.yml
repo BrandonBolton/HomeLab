@@ -8,6 +8,7 @@
   ansible.builtin.get_url:
     url: https://get.k3s.io
     dest: /tmp/k3s_install.sh
+    mode: '0755'
   when: k3s_version.rc != 0
 
 - name: K3s - Installs the newest version of K3s
