@@ -1,0 +1,57 @@
+---
+- name: Install and configure MicroK8s cluster
+  hosts: all
+  become: true
+  vars:
+    microk8s_addons:
+      - dns
+      - storage
+  tasks:
+    - name: Install MicroK8s
+      snap:
+        name: microk8s
+        classic: yes
+        state: present
+
+    - name: Add user to microk8s group
+      user:
+        name: "{{ ansible_user }}"
+        groups: microk8s
+
+    - name: Change ownership of .kube directory
+      file:
+        path: "/home/{{ ansible_user }}/.kube"
+        owner: "{{ ansible_user }}"
+        recurse: true
+        state: directory
+      ignore_errors: true
+
+- name: Enable MicroK8s add-ons on master
+  hosts: master
+  become: true
+  tasks:
+    - name: Enable MicroK8s add-ons
+      shell: "microk8s enable {{ item }}"
+      loop: "{{ microk8s_addons }}"
+      register: enable_addons
+      changed_when: false
+
+    - name: Get join command
+      shell: "microk8s add-node | grep 'microk8s join'"
+      register: join_cmd
+      changed_when: false
+      delegate_to: master
+
+    - name: Set join command fact
+      set_fact:
+        microk8s_join_cmd: "{{ join_cmd.stdout }}"
+
+- name: Join nodes to cluster
+  hosts: nodes
+  become: true
+  tasks:
+    - name: Join node to cluster
+      shell: "{{ hostvars['master']['microk8s_join_cmd'] }}"
+      args:
+        warn: false
+      when: hostvars['master']['microk8s_join_cmd'] is defined

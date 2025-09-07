@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant
+  template:
+    metadata:
+      labels:
+        app: home-assistant
+    spec:
+      initContainers:
+      - name: copy-config
+        image: busybox
+        command: ["sh", "-c", "cp -f /config-source/configuration.yaml /config/configuration.yaml"]
+        volumeMounts:
+        - name: config-source
+          mountPath: /config-source
+        - name: config
+          mountPath: /config
+      containers:
+      - name: home-assistant
+        image: ghcr.io/home-assistant/home-assistant:stable
+        ports:
+        - containerPort: 8123
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: home-assistant-pvc
+      - name: config-source
+        configMap:
+          name: home-assistant-config
