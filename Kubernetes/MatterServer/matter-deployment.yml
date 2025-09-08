@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matter-server
+  namespace: matter-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matter-server
+  template:
+    metadata:
+      labels:
+        app: matter-server
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      nodeName: k3snode1
+      hostNetwork: true
+      containers:
+      - name: matter-server
+        image: ghcr.io/home-assistant-libs/python-matter-server:stable
+        securityContext:
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: dbus
+          mountPath: /run/dbus
+          readOnly: true
+        env:
+        - name: TZ
+          value: "America/Chicago"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: matter-server-data
+      - name: dbus
+        hostPath:
+          path: /run/dbus
+          type: DirectoryOrCreate
