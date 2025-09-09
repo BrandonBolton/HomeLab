@@ -5,7 +5,12 @@ metadata:
   namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
+  tls:
+  - hosts:
+    - prometheus.boltonhomelab.com
+    secretName: prometheus-tls
   rules:
     - host: prometheus.boltonhomelab.com
       http:

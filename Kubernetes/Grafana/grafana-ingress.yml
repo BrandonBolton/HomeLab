@@ -5,7 +5,12 @@ metadata:
   namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
+  tls:
+  - hosts:
+    - grafana.boltonhomelab.com
+    secretName: grafana-tls
   rules:
     - host: grafana.boltonhomelab.com
       http:
