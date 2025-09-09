@@ -14,25 +14,3 @@
         upgrade: dist
         update_cache: yes
       when: ansible_facts['os_family'] == "Debian"
-
-    - name: Check if RedHat needs reboot
-      command: needs-restarting -r
-      register: rh_reboot
-      changed_when: false
-      failed_when: false
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Set RedHat reboot required fact
-      set_fact:
-        redhat_reboot_required: "{{ rh_reboot.rc != 0 }}"
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Reboot if required
-      ansible.builtin.reboot:
-        msg: "Reboot requested by Ansible"
-        pre_reboot_delay: 10
-        post_reboot_delay: 30
-        reboot_timeout: 600
-      when: (ansible_facts['os_family'] == 'Debian' and ansible_facts['apt_reboot_required'] | default(false)) or
-            (ansible_facts['os_family'] == 'RedHat' and redhat_reboot_required | default(false))
-      ignore_errors: yes
