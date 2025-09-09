@@ -13,27 +13,6 @@ else
 fi
 echo "-----------------------------------"
 
-echo "Deploying Pi-hole..."
-
-kubectl get namespace pihole || kubectl create namespace pihole
-
-PIHOLE_PRIVATE_KEY=$(op read "op://Private/Home Assistant - PiHole/private key")
-PIHOLE_PUBLIC_KEY=$(op read "op://Private/Home Assistant - PiHole/public key")
-PIHOLE_WEBPASSWORD=$(op read "op://Private/Kubernetes Homelab/PiHoleAdminPassword")
-kubectl delete secret pihole-webpassword -n pihole --ignore-not-found
-kubectl create secret generic pihole-webpassword \
-	--from-literal=WEBPASSWORD="$PIHOLE_WEBPASSWORD" \
-	-n pihole
-
-kubectl apply -f ./Kubernetes/PiHole/
-if kubectl rollout status deployment/pihole -n pihole; then
-	echo "Pi-hole deployed and ready."
-else
-	echo "Pi-hole deployment failed or not ready." >&2
-fi
-echo "-----------------------------------"
-
-
 echo "Deploying Prometheus..."
 
 kubectl apply -f ./Kubernetes/Prometheus/
@@ -94,6 +73,38 @@ if kubectl rollout status deployment/matter-server -n matter-server; then
 else
 	echo "Matter Server deployment failed or not ready." >&2
 fi
+echo "-----------------------------------"
+
+# AWX deployment
+
+echo "Deploying AWX Operator and AWX..."
+
+kubectl get namespace awx || kubectl create namespace awx
+
+# Create AWX admin password secret from 1Password
+AWX_ADMIN_PASSWORD=$(op read "op://Private/Kubernetes Homelab/AWXAdminPassword")
+kubectl delete secret awx-admin-password -n awx --ignore-not-found
+kubectl create secret generic awx-admin-password --namespace awx --from-literal=password="$AWX_ADMIN_PASSWORD"
+
+# Download AWX Operator Helm chart if not present
+if [ ! -f ./Kubernetes/AWX/awx-operator-2.19.1.tgz ]; then
+    echo "Downloading AWX Operator Helm chart..."
+    curl -L https://github.com/ansible/awx-operator/releases/download/2.19.1/awx-operator-2.19.1.tgz -o ./Kubernetes/AWX/awx-operator-2.19.1.tgz
+fi
+
+# Install AWX Operator using Helm
+if [ -f ./Kubernetes/AWX/awx-operator-2.19.1.tgz ]; then
+    helm upgrade --install awx-operator ./Kubernetes/AWX/awx-operator-2.19.1.tgz -n awx
+    # Wait for AWX Operator pod to be ready
+    kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=awx-operator -n awx --timeout=180s
+    # Deploy AWX custom resource
+    kubectl apply -f ./Kubernetes/AWX/awx-operator-crd.yml
+    # Wait for AWX web deployment to be ready
+    kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=awx-web -n awx --timeout=180s
+else
+    echo "AWX Operator Helm chart not found. Aborting AWX deployment." >&2
+fi
+
 echo "-----------------------------------"
 
 echo "All services deployed."

@@ -1,0 +1,26 @@
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+  namespace: awx
+spec:
+  service_type: ClusterIP
+  ingress_type: Ingress
+  hostname: awx.boltonhomelab.com
+  ingress_tls_secret: awx-tls
+  admin_user: admin
+  admin_password_secret: awx-admin-password
+  postgres_resource_requirements:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  web_resource_requirements:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
